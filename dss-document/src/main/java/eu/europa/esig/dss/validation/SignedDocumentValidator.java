@@ -1037,7 +1037,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 					// Check of the associated conditions to identify the qualifiers
 					final List<String> qualifiers = getQualifiers(serviceStatusAtTestDate, certToken);
-					if (CollectionUtils.isNotEmpty(qualifiers)) {
+					if (Utils.isCollectionNotEmpty(qualifiers)) {
 						final XmlQualifiers xmlQualifiers = new XmlQualifiers();
 						for (String qualifier : qualifiers) {
 							xmlQualifiers.getQualifier().add(qualifier);
@@ -1046,7 +1046,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 					}
 
 					List<String> additionalServiceInfoUris = serviceStatusAtTestDate.getAdditionalServiceInfoUris();
-					if (CollectionUtils.isNotEmpty(additionalServiceInfoUris)) {
+					if (Utils.isCollectionNotEmpty(additionalServiceInfoUris)) {
 						XmlAdditionalServiceInfoUris xmlAdditional = new XmlAdditionalServiceInfoUris();
 						for (String uri : additionalServiceInfoUris) {
 							xmlAdditional.getURI().add(uri);
