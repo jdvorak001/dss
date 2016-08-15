@@ -41,9 +41,6 @@ import java.util.concurrent.TimeUnit;
 import javax.security.auth.x500.X500Principal;
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x500.style.BCStyle;
@@ -98,6 +95,7 @@ import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.KeyUsageBit;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
+import eu.europa.esig.dss.utils.Utils;
 import eu.europa.esig.dss.validation.executor.CustomProcessExecutor;
 import eu.europa.esig.dss.validation.executor.ProcessExecutor;
 import eu.europa.esig.dss.validation.executor.ValidationLevel;
@@ -214,7 +212,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 *         of the document type
 	 */
 	public static SignedDocumentValidator fromDocument(final DSSDocument dssDocument) {
-		if (CollectionUtils.isEmpty(registredDocumentValidators)) {
+		if (Utils.isCollectionEmpty(registredDocumentValidators)) {
 			throw new DSSException("No validator registred");
 		}
 
@@ -527,9 +525,9 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 		String absolutePath = document.getAbsolutePath();
 		String documentName = document.getName();
-		if (StringUtils.isNotEmpty(absolutePath)) {
+		if (Utils.isStringNotEmpty(absolutePath)) {
 			jaxbDiagnosticData.setDocumentName(removeSpecialCharsForXml(absolutePath));
-		} else if (StringUtils.isNotEmpty(documentName)) {
+		} else if (Utils.isStringNotEmpty(documentName)) {
 			jaxbDiagnosticData.setDocumentName(removeSpecialCharsForXml(documentName));
 		} else {
 			jaxbDiagnosticData.setDocumentName("?");
@@ -671,7 +669,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 		String currentMessage = message;
 		String errorMessage = xmlSignature.getErrorMessage();
-		if (StringUtils.isBlank(errorMessage)) {
+		if (Utils.isStringBlank(errorMessage)) {
 			errorMessage = currentMessage;
 		} else {
 			errorMessage += "<br />" + currentMessage;
@@ -744,7 +742,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		xmlTimestampToken.setCertificateChain(xmlCertChainType);
 
 		final List<TimestampReference> timestampReferences = timestampToken.getTimestampedReferences();
-		if (CollectionUtils.isNotEmpty(timestampReferences)) {
+		if (Utils.isCollectionNotEmpty(timestampReferences)) {
 			final XmlSignedObjectsType xmlSignedObjectsType = new XmlSignedObjectsType();
 			final List<XmlDigestAlgAndValueType> xmlDigestAlgAndValueList = xmlSignedObjectsType.getDigestAlgAndValue();
 
@@ -944,14 +942,14 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		xmlCert.setCertificateChain(xmlForCertificateChain(issuerToken));
 
 		List<String> qcStatementsIdList = DSSASN1Utils.getQCStatementsIdList(certToken);
-		if (CollectionUtils.isNotEmpty(qcStatementsIdList)) {
+		if (Utils.isCollectionNotEmpty(qcStatementsIdList)) {
 			XmlQCStatementIds qcStatementIds = new XmlQCStatementIds();
 			qcStatementIds.getOid().addAll(qcStatementsIdList);
 			xmlCert.setQCStatementIds(qcStatementIds);
 		}
 
 		List<String> policyIdentifiersList = DSSASN1Utils.getPolicyIdentifiers(certToken);
-		if (CollectionUtils.isNotEmpty(policyIdentifiersList)) {
+		if (Utils.isCollectionNotEmpty(policyIdentifiersList)) {
 			XmlCertificatePolicyIds certPolicyIds = new XmlCertificatePolicyIds();
 			certPolicyIds.getOid().addAll(policyIdentifiersList);
 			xmlCert.setCertificatePolicyIds(certPolicyIds);
@@ -965,7 +963,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 	private void xmlForKeyUsageBits(CertificateToken certToken, XmlCertificate xmlCert) {
 		final Set<KeyUsageBit> keyUsageBits = certToken.getKeyUsageBits();
-		if (CollectionUtils.isEmpty(keyUsageBits)) {
+		if (Utils.isCollectionEmpty(keyUsageBits)) {
 			return;
 		}
 		final XmlKeyUsageBits xmlKeyUsageBits = new XmlKeyUsageBits();
@@ -1022,7 +1020,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			}
 			services = trustAnchor.getAssociatedTSPS();
 		}
-		if (CollectionUtils.isNotEmpty(services)) {
+		if (Utils.isCollectionNotEmpty(services)) {
 			for (final ServiceInfo serviceInfo : services) {
 				final XmlTrustedServiceProviderType xmlTSP = new XmlTrustedServiceProviderType();
 				xmlTSP.setTSPName(serviceInfo.getTspName());
@@ -1039,7 +1037,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 
 					// Check of the associated conditions to identify the qualifiers
 					final List<String> qualifiers = getQualifiers(serviceStatusAtTestDate, certToken);
-					if (CollectionUtils.isNotEmpty(qualifiers)) {
+					if (Utils.isCollectionNotEmpty(qualifiers)) {
 						final XmlQualifiers xmlQualifiers = new XmlQualifiers();
 						for (String qualifier : qualifiers) {
 							xmlQualifiers.getQualifier().add(qualifier);
@@ -1048,7 +1046,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 					}
 
 					List<String> additionalServiceInfoUris = serviceStatusAtTestDate.getAdditionalServiceInfoUris();
-					if (CollectionUtils.isNotEmpty(additionalServiceInfoUris)) {
+					if (Utils.isCollectionNotEmpty(additionalServiceInfoUris)) {
 						XmlAdditionalServiceInfoUris xmlAdditional = new XmlAdditionalServiceInfoUris();
 						for (String uri : additionalServiceInfoUris) {
 							xmlAdditional.getURI().add(uri);
@@ -1100,7 +1098,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 */
 	private void dealRevocationData(Set<DigestAlgorithm> usedDigestAlgorithms, final CertificateToken certToken, final XmlCertificate xmlCert) {
 		final Set<RevocationToken> revocationTokens = certToken.getRevocationTokens();
-		if (CollectionUtils.isNotEmpty(revocationTokens)) {
+		if (Utils.isCollectionNotEmpty(revocationTokens)) {
 			for (RevocationToken revocationToken : revocationTokens) {
 				final XmlRevocationType xmlRevocation = new XmlRevocationType();
 				xmlRevocation.setOrigin(revocationToken.getOrigin().name());
@@ -1118,7 +1116,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 				xmlRevocation.setSource(revocationToken.getClass().getSimpleName());
 
 				String sourceURL = revocationToken.getSourceURL();
-				if (StringUtils.isNotEmpty(sourceURL)) { // not empty = online
+				if (Utils.isStringNotEmpty(sourceURL)) { // not empty = online
 					xmlRevocation.setSourceAddress(sourceURL);
 					xmlRevocation.setAvailable(revocationToken.isAvailable());
 				}
@@ -1216,7 +1214,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		final byte[] digestValue = signaturePolicy.getDigestValue();
 		final DigestAlgorithm signPolicyHashAlgFromSignature = signaturePolicy.getDigestAlgorithm();
 
-		if (ArrayUtils.isNotEmpty(digestValue)) {
+		if (Utils.isArrayNotEmpty(digestValue)) {
 			XmlDigestAlgAndValueType xmlDigestAlgAndValue = new XmlDigestAlgAndValueType();
 			xmlDigestAlgAndValue.setDigestMethod(signPolicyHashAlgFromSignature == null ? "" : signPolicyHashAlgFromSignature.getName());
 			xmlDigestAlgAndValue.setDigestValue(DatatypeConverter.printBase64Binary(digestValue));
@@ -1228,7 +1226,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		 * which the digest value present in the property/attribute will be
 		 * checked:
 		 */
-		if ((policyDocument == null) && StringUtils.isEmpty(policyUrl)) {
+		if ((policyDocument == null) && Utils.isStringEmpty(policyUrl)) {
 			xmlPolicy.setIdentified(false);
 			if (policyId.isEmpty()) {
 				xmlPolicy.setStatus(true);
@@ -1256,7 +1254,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			return;
 		}
 
-		if (ArrayUtils.isEmpty(policyBytes)) {
+		if (Utils.isArrayEmpty(policyBytes)) {
 			xmlPolicy.setIdentified(false);
 			xmlPolicy.setProcessingError("Empty content for policy");
 			return;
@@ -1440,8 +1438,8 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		if (structureValid != null) {
 
 			final XmlStructuralValidationType xmlStructuralValidationType = new XmlStructuralValidationType();
-			xmlStructuralValidationType.setValid(StringUtils.EMPTY.equals(structureValid));
-			if (!StringUtils.EMPTY.equals(structureValid)) {
+			xmlStructuralValidationType.setValid(Utils.isStringEmpty(structureValid));
+			if (Utils.isStringNotEmpty(structureValid)) {
 				xmlStructuralValidationType.setMessage(structureValid);
 			}
 			xmlSignature.setStructuralValidation(xmlStructuralValidationType);
@@ -1520,7 +1518,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 			final List<String> xmlIdentifiers = xmlCommitmentTypeIndication.getIdentifier();
 
 			final List<String> identifiers = commitmentTypeIndication.getIdentifiers();
-			if (CollectionUtils.isNotEmpty(identifiers)) {
+			if (Utils.isCollectionNotEmpty(identifiers)) {
 				for (final String identifier : identifiers) {
 					xmlIdentifiers.add(identifier);
 				}

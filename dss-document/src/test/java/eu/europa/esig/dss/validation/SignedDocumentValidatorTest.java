@@ -19,7 +19,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +36,7 @@ import eu.europa.esig.dss.tsl.KeyUsageCondition;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
 import eu.europa.esig.dss.util.MutableTimeDependentValues;
+import eu.europa.esig.dss.utils.Utils;
 import eu.europa.esig.dss.x509.CertificateSourceType;
 import eu.europa.esig.dss.x509.CertificateToken;
 
@@ -93,7 +93,7 @@ public class SignedDocumentValidatorTest {
 		methodDealTrustedService.invoke(sdv, certificate, certificate.getNotBefore(), cert);
 
 		List<XmlTrustedServiceProviderType> trustedServiceProviders = cert.getTrustedServiceProvider();
-		assertTrue(CollectionUtils.isNotEmpty(trustedServiceProviders));
+		assertTrue(Utils.isCollectionNotEmpty(trustedServiceProviders));
 
 		boolean foundTOTO = false;
 		boolean foundTATA = false;
