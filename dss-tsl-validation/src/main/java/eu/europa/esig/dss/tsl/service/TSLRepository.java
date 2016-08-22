@@ -50,6 +50,7 @@ import eu.europa.esig.dss.tsl.TLInfo;
 import eu.europa.esig.dss.tsl.TSLConditionsForQualifiers;
 import eu.europa.esig.dss.tsl.TSLLoaderResult;
 import eu.europa.esig.dss.tsl.TSLParserResult;
+import eu.europa.esig.dss.tsl.TSLPointer;
 import eu.europa.esig.dss.tsl.TSLService;
 import eu.europa.esig.dss.tsl.TSLServiceProvider;
 import eu.europa.esig.dss.tsl.TSLServiceStatusAndInformationExtensions;
@@ -80,6 +81,8 @@ public class TSLRepository {
 
 	private Map<String, TSLValidationModel> tsls = new HashMap<String, TSLValidationModel>();
 
+	private Map<String, TSLPointer> humanReadableTsls = Collections.emptyMap();
+
 	private TrustedListsCertificateSource trustedListsCertificateSource;
 
 	public void setCacheDirectoryPath(String cacheDirectoryPath) {
@@ -104,6 +107,10 @@ public class TSLRepository {
 
 	public TSLValidationModel getByCountry(String countryIsoCode) {
 		return tsls.get(countryIsoCode);
+	}
+
+	public TSLPointer getHumanReadableTSLPointerByCountry(String countryIsoCode) {
+		return humanReadableTsls.get(countryIsoCode);
 	}
 
 	public List<TSLValidationModel> getTSLValidationModels() {
@@ -167,6 +174,7 @@ public class TSLRepository {
 		try {
 			Utils.cleanDirectory(new File(cacheDirectoryPath));
 			tsls.clear();
+			humanReadableTsls = Collections.emptyMap();
 		} catch (IOException e) {
 			logger.error("Unable to clean cache directory : " + e.getMessage(), e);
 		}
@@ -236,6 +244,14 @@ public class TSLRepository {
 
 	private void add(String countryCode, TSLValidationModel tsl) {
 		tsls.put(countryCode, tsl);
+	}
+
+	void setHumanReadableTSLPointers(final Iterable<TSLPointer> ptrs) {
+		final Map<String, TSLPointer> map = new HashMap<String, TSLPointer>();
+		for (final TSLPointer ptr : ptrs) {
+			map.put(ptr.getTerritory(), ptr);
+		}
+		humanReadableTsls = map;
 	}
 
 	private String storeOnFileSystem(String countryCode, TSLLoaderResult resultLoader) {
