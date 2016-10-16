@@ -160,6 +160,8 @@ public class TSLValidationJob {
 					}
 				}
 
+				repository.setHumanReadableTSLPointers(europeanModel.getParseResult().getHumanReadableTSLPointers());
+
 				storeValidationResults(futureValidationResults);
 			}
 
@@ -213,6 +215,7 @@ public class TSLValidationJob {
 			} catch (Exception e) {
 				logger.error("Unable to validate the LOTL : " + e.getMessage(), e);
 			}
+			repository.setHumanReadableTSLPointers(europeanModel.getParseResult().getHumanReadableTSLPointers());
 		}
 
 		analyzeCountryPointers(parseResult.getPointers(), newLotl);

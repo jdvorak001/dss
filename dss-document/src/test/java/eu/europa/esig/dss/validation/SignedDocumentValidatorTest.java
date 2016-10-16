@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ import eu.europa.esig.dss.DSSUtils;
 import eu.europa.esig.dss.jaxb.diagnostic.DiagnosticData;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlCertificate;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlTrustedServiceProvider;
+import eu.europa.esig.dss.test.mock.MockTLInfo;
 import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.KeyUsageBit;
 import eu.europa.esig.dss.tsl.KeyUsageCondition;
@@ -61,8 +63,8 @@ public class SignedDocumentValidatorTest {
 		List<String> emptyList = Collections.emptyList();
 		final ServiceInfoStatus lastestStatus = new ServiceInfoStatus(null, emptyMap, emptyList, null, calendar.getTime(), null);
 		statusList.addOldest(lastestStatus);
-
-		ServiceInfo serviceInfo = new ServiceInfo();
+		
+		ServiceInfo serviceInfo = new ServiceInfo(new MockTLInfo());
 		serviceInfo.setStatus(statusList);
 
 		Condition condition = new KeyUsageCondition(KeyUsageBit.nonRepudiation, true);
@@ -86,9 +88,9 @@ public class SignedDocumentValidatorTest {
 		XmlCertificate cert = (XmlCertificate) method.invoke(sdv, new HashSet<Object>(), certificate);
 		assertNotNull(cert);
 
-		Method methodDealTrustedService = SignedDocumentValidator.class.getDeclaredMethod("dealTrustedService", CertificateToken.class, XmlCertificate.class);
+		Method methodDealTrustedService = SignedDocumentValidator.class.getDeclaredMethod("dealTrustedService", CertificateToken.class, Date.class, XmlCertificate.class);
 		methodDealTrustedService.setAccessible(true);
-		methodDealTrustedService.invoke(sdv, certificate, cert);
+		methodDealTrustedService.invoke(sdv, certificate, certificate.getNotBefore(), cert);
 
 		List<XmlTrustedServiceProvider> trustedServiceProviders = cert.getTrustedServiceProvider();
 		assertTrue(Utils.isCollectionNotEmpty(trustedServiceProviders));

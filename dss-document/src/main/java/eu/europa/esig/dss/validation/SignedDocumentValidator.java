@@ -83,6 +83,7 @@ import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.KeyUsageBit;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
+import eu.europa.esig.dss.util.TimeDependentValues;
 import eu.europa.esig.dss.utils.Utils;
 import eu.europa.esig.dss.validation.executor.CustomProcessExecutor;
 import eu.europa.esig.dss.validation.executor.ProcessExecutor;
@@ -110,6 +111,11 @@ import eu.europa.esig.jaxb.policy.ConstraintsParameters;
  * eu.europa.esig.dss.validation.scope.SignatureScopeFinderFactory
  */
 public abstract class SignedDocumentValidator implements DocumentValidator {
+
+	/**
+	 * The service status URI to indicate that the service listed on the TL does not have a history record valid for the signature signing time.
+	 */
+	public static final String NOT_YET_LISTED_SERVICE_STATUS_URI = "https://ec.europa.eu/cefdigital/wiki/display/CEFDIGITAL/eSignature/TrustedList/Svcstatus/notYetListed";
 
 	private static final Logger LOG = LoggerFactory.getLogger(SignedDocumentValidator.class);
 
@@ -481,14 +487,24 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 		// the extraction of diagnostic data is
 		// launched.
 		final Set<DigestAlgorithm> usedCertificatesDigestAlgorithms = new HashSet<DigestAlgorithm>();
+		// Also the earliest date of all signatures is extracted.
+		Date earliestSignatureDate = null;
 		for (final AdvancedSignature signature : allSignatureList) {
-
 			final XmlSignature xmlSignature = validateSignature(signature);
 			usedCertificatesDigestAlgorithms.addAll(signature.getUsedCertificatesDigestAlgorithms());
 			jaxbDiagnosticData.getSignatures().add(xmlSignature);
+			// FIXME - Take into account the signature timestamps where they exist
+			final Date thisDate = signature.getSigningTime();
+			if ( thisDate != null && ( earliestSignatureDate == null || thisDate.before( earliestSignatureDate ) ) ) {
+				earliestSignatureDate = thisDate;
+			}
+		}
+		if ( earliestSignatureDate == null ) {
+			earliestSignatureDate = new Date();
 		}
 		final Set<CertificateToken> processedCertificates = validationContext.getProcessedCertificates();
-		dealUsedCertificates(usedCertificatesDigestAlgorithms, processedCertificates);
+		// FIXME - This is rough. Each signature should be validated at its own signing time: the associated TSP services can have different statuses. 
+		dealUsedCertificates(usedCertificatesDigestAlgorithms, earliestSignatureDate, processedCertificates);
 
 		jaxbDiagnosticData.setValidationDate(validationContext.getCurrentTime());
 		return jaxbDiagnosticData;
@@ -787,7 +803,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * @param usedCertificatesDigestAlgorithms
 	 * @param usedCertTokens
 	 */
-	private void dealUsedCertificates(final Set<DigestAlgorithm> usedCertificatesDigestAlgorithms, final Set<CertificateToken> usedCertTokens) {
+	private void dealUsedCertificates(final Set<DigestAlgorithm> usedCertificatesDigestAlgorithms, final Date testDate, final Set<CertificateToken> usedCertTokens) {
 		for (final CertificateToken certToken : usedCertTokens) {
 			final XmlCertificate xmlCert = dealCertificateDetails(usedCertificatesDigestAlgorithms, certToken);
 			// !!! Log the certificate
@@ -796,7 +812,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 				final String pem = DSSUtils.convertToPEM(certToken);
 				LOG.trace("\n" + pem);
 			}
-			dealTrustedService(certToken, xmlCert);
+			dealTrustedService(certToken, testDate, xmlCert);
 			dealRevocationData(usedCertificatesDigestAlgorithms, certToken, xmlCert);
 			dealCertificateValidationInfo(certToken, xmlCert);
 			jaxbDiagnosticData.getUsedCertificates().add(xmlCert);
@@ -961,7 +977,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 	 * @param certToken
 	 * @param xmlCert
 	 */
-	private void dealTrustedService(final CertificateToken certToken, final XmlCertificate xmlCert) {
+	private void dealTrustedService(final CertificateToken certToken, final Date testDate, final XmlCertificate xmlCert) {
 		Set<ServiceInfo> services = null;
 		if (certToken.isTrusted()) {
 			services = certToken.getAssociatedTSPS();
@@ -980,25 +996,34 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 				xmlTSP.setTSPServiceType(serviceInfo.getType());
 				xmlTSP.setWellSigned(serviceInfo.isTlWellSigned());
 
-				final ServiceInfoStatus serviceStatusAtCertIssuance = serviceInfo.getStatus().getCurrent(certToken.getNotBefore());
-				if (serviceStatusAtCertIssuance != null) {
+				final TimeDependentValues<ServiceInfoStatus> status = serviceInfo.getStatus();
+				final ServiceInfoStatus serviceStatusAtTestDate = status.getCurrent(testDate);
+				if (serviceStatusAtTestDate != null) {
 
-					xmlTSP.setStatus(serviceStatusAtCertIssuance.getStatus());
-					xmlTSP.setStartDate(serviceStatusAtCertIssuance.getStartDate());
-					xmlTSP.setEndDate(serviceStatusAtCertIssuance.getEndDate());
+					xmlTSP.setStatus(serviceStatusAtTestDate.getStatus());
+					xmlTSP.setStartDate(serviceStatusAtTestDate.getStartDate());
+					xmlTSP.setEndDate(serviceStatusAtTestDate.getEndDate());
 
 					// Check of the associated conditions to identify the qualifiers
-					final List<String> qualifiers = getQualifiers(serviceStatusAtCertIssuance, certToken);
+					final List<String> qualifiers = getQualifiers(serviceStatusAtTestDate, certToken);
 					if (Utils.isCollectionNotEmpty(qualifiers)) {
 						xmlTSP.setQualifiers(qualifiers);
 					}
 
-					List<String> additionalServiceInfoUris = serviceStatusAtCertIssuance.getAdditionalServiceInfoUris();
+					List<String> additionalServiceInfoUris = serviceStatusAtTestDate.getAdditionalServiceInfoUris();
 					if (Utils.isCollectionNotEmpty(additionalServiceInfoUris)) {
 						xmlTSP.setAdditionalServiceInfoUris(additionalServiceInfoUris);
 					}
 
-					xmlTSP.setExpiredCertsRevocationInfo(serviceStatusAtCertIssuance.getExpiredCertsRevocationInfo());
+					xmlTSP.setExpiredCertsRevocationInfo(serviceStatusAtTestDate.getExpiredCertsRevocationInfo());
+				} else {
+					xmlTSP.setStartDate(testDate);
+					ServiceInfoStatus earliestStatus = null;
+					for ( final ServiceInfoStatus s : status ) {
+						earliestStatus = s;
+					}
+					xmlTSP.setEndDate(earliestStatus.getStartDate());
+					xmlTSP.setStatus(NOT_YET_LISTED_SERVICE_STATUS_URI);
 				}
 				xmlCert.getTrustedServiceProvider().add(xmlTSP);
 			}

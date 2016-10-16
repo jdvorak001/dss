@@ -22,13 +22,10 @@ package eu.europa.esig.dss.test.mock;
 
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
+import eu.europa.esig.dss.tsl.TLInfo;
 import eu.europa.esig.dss.util.MutableTimeDependentValues;
 import eu.europa.esig.dss.x509.CertificateSourceType;
 import eu.europa.esig.dss.x509.CertificateToken;
@@ -68,8 +65,8 @@ public class MockEmptyTSLCertificateSource extends CommonTrustedCertificateSourc
 	 * @return
 	 */
 	private ServiceInfo getMockServiceInfo() {
-
-		ServiceInfo serviceInfo = new ServiceInfo();
+		TLInfo tlInfo = new MockTLInfo();
+		ServiceInfo serviceInfo = new ServiceInfo(tlInfo);
 		serviceInfo.setTspName("DSS, Mock Office DSS-CA");
 		serviceInfo.setType(CA_QC);
 		serviceInfo.setServiceName("MockTSPServiceName");
@@ -77,11 +74,9 @@ public class MockEmptyTSLCertificateSource extends CommonTrustedCertificateSourc
 		calendar.add(Calendar.YEAR, -1);
 
 		MutableTimeDependentValues<ServiceInfoStatus> status = new MutableTimeDependentValues<ServiceInfoStatus>();
-		Map<String, List<Condition>> emptyMap = new HashMap<String, List<Condition>>();
-		List<String> emptyList = Collections.emptyList();
-		status.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION, emptyMap, emptyList, null, calendar.getTime(), null));
+		status.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION, Collections.emptyMap(),
+				Collections.emptyList(), null, calendar.getTime(), null));
 		serviceInfo.setStatus(status);
-		serviceInfo.setTlWellSigned(true);
 
 		return serviceInfo;
 	}

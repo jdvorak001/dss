@@ -127,6 +127,7 @@ public class CertificateToken extends Token {
 		}
 
 		this.x509Certificate = x509Certificate;
+		this.x500Principal = x509Certificate.getSubjectX500Principal();
 		this.issuerX500Principal = x509Certificate.getIssuerX500Principal();
 		// The Algorithm OID is used and not the name {@code x509Certificate.getSigAlgName()}
 		this.signatureAlgorithm = SignatureAlgorithm.forOID(x509Certificate.getSigAlgOID());
@@ -483,7 +484,7 @@ public class CertificateToken extends Token {
 			out.append(indentStr).append("Issuer subject name: ").append(getIssuerX500Principal()).append('\n');
 			if (sources.contains(CertificateSourceType.TRUSTED_LIST)) {
 				for (ServiceInfo si : associatedTSPS) {
-					out.append(indentStr).append("Service Info      :\n");
+					out.append(indentStr).append("Service Info       :\n");
 					indentStr += "\t";
 					out.append(si.toString(indentStr));
 					indentStr = indentStr.substring(1);
@@ -575,6 +576,34 @@ public class CertificateToken extends Token {
 
 	public String getBase64Encoded() {
 		return DatatypeConverter.printBase64Binary(getEncoded());
+	}
+
+	public String getReadableCertificate() {
+		String readableCertificate = x509Certificate.getSubjectDN().getName();
+		final int dnStartIndex = readableCertificate.indexOf("CN=") + 3;
+		if ((dnStartIndex > 0) && (readableCertificate.indexOf(",", dnStartIndex) > 0)) {
+			readableCertificate = readableCertificate.substring(dnStartIndex, readableCertificate.indexOf(",", dnStartIndex)) + " (SN:" + getSerialNumber()
+					+ ")";
+		}
+		return readableCertificate;
+	}
+
+	public void copySourceTypeFrom(final CertificateToken srcCertToken) {
+		final Set<CertificateSourceType> sources2 = srcCertToken.getSources();
+		if (sources2 != null) {
+			for (final CertificateSourceType cst : sources2) {
+				addSourceType(cst);
+			}
+		}
+	}
+
+	public void copyServiceInfoFrom(final CertificateToken srcCertToken) {
+		final Set<ServiceInfo> services2 = srcCertToken.getAssociatedTSPS();
+		if (services2 != null) {
+			for (final ServiceInfo serviceInfo : services2) {
+				addServiceInfo(serviceInfo);
+			}
+		}
 	}
 
 }
