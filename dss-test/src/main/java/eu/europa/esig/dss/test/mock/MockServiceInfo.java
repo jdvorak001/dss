@@ -22,7 +22,10 @@ package eu.europa.esig.dss.test.mock;
 
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
+import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
 import eu.europa.esig.dss.util.MutableTimeDependentValues;
@@ -42,8 +45,10 @@ public class MockServiceInfo extends ServiceInfo {
 		calendar.add(Calendar.YEAR, -15);
 
 		MutableTimeDependentValues<ServiceInfoStatus> statusList = new MutableTimeDependentValues<ServiceInfoStatus>();
-		statusList.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION_119612, Collections.emptyMap(),
-				Collections.emptyList(), null, calendar.getTime(), null));
+		final Map<String, List<Condition>> emptyMap = Collections.emptyMap();
+		final List<String> emptyList = Collections.emptyList();
+		statusList.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION_119612, emptyMap,
+				emptyList, null, calendar.getTime(), null));
 		setStatus(statusList);
 	}
 }

@@ -22,7 +22,10 @@ package eu.europa.esig.dss.test.mock;
 
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
+import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
 import eu.europa.esig.dss.tsl.TLInfo;
@@ -74,8 +77,10 @@ public class MockEmptyTSLCertificateSource extends CommonTrustedCertificateSourc
 		calendar.add(Calendar.YEAR, -1);
 
 		MutableTimeDependentValues<ServiceInfoStatus> status = new MutableTimeDependentValues<ServiceInfoStatus>();
-		status.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION, Collections.emptyMap(),
-				Collections.emptyList(), null, calendar.getTime(), null));
+		final Map<String, List<Condition>> emptyMap = Collections.emptyMap();
+		final List<String> emptyList = Collections.emptyList();
+		status.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION, emptyMap,
+				emptyList, null, calendar.getTime(), null));
 		serviceInfo.setStatus(status);
 
 		return serviceInfo;
