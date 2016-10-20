@@ -31,13 +31,14 @@ import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
 import eu.europa.esig.dss.util.MutableTimeDependentValues;
 
+@SuppressWarnings("serial")
 public class MockServiceInfo extends ServiceInfo {
 
 	public static final String CA_QC = "http://uri.etsi.org/TrstSvc/Svctype/CA/QC";
 	public static final String SERVICE_STATUS_UNDERSUPERVISION_119612 = "http://uri.etsi.org/TrstSvc/TrustedList/Svcstatus/undersupervision";
 
 	public MockServiceInfo() {
-
+		super(new MockTLInfo());
 		setTspName("DSS, Mock Office DSS-CA");
 		setType(CA_QC);
 		setServiceName("DSS, Mock Service Name");
@@ -49,6 +50,5 @@ public class MockServiceInfo extends ServiceInfo {
 		List<String> emptyList = Collections.emptyList();
 		statusList.addOldest(new ServiceInfoStatus(SERVICE_STATUS_UNDERSUPERVISION_119612, emptyMap, emptyList, null, calendar.getTime(), null));
 		setStatus(statusList);
-		setTlWellSigned(true);
 	}
 }
