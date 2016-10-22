@@ -325,6 +325,7 @@
 			
 			<xs:element name="expiredCertsRevocationInfo" type="xs:dateTime" minOccurs="0" />
 			<xs:element name="WellSigned" type="xs:boolean" />
+			<xs:element name="TLInfo" type="TLInfo" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	
@@ -357,6 +358,18 @@
 	<xs:complexType name="DigestAlgoAndValues">
 		<xs:sequence>
 			<xs:element name="DigestAlgoAndValue" type="DigestAlgoAndValue" minOccurs="0" maxOccurs="unbounded" />
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="TLInfo">
+		<xs:sequence>
+			<xs:element name="WellSigned" type="xs:boolean"/>
+			<xs:element name="Territory" type="xs:string"/>
+			<xs:element name="TerritoryAsISO3166" type="xs:string"/>
+			<xs:element name="SequenceNumber" type="xs:positiveInteger"/>
+			<xs:element name="IssueDate" type="xs:dateTime"/>
+			<xs:element name="NextUpdateDate" type="xs:dateTime"/>
+			<xs:element name="LoadedDate" type="xs:dateTime"/>
 		</xs:sequence>
 	</xs:complexType>
 	
