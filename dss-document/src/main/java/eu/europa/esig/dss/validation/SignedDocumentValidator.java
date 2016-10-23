@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.math.BigInteger;
 import java.net.URL;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -76,6 +77,7 @@ import eu.europa.esig.dss.jaxb.diagnostic.XmlSignedObjects;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlSignedSignature;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlSigningCertificate;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlStructuralValidation;
+import eu.europa.esig.dss.jaxb.diagnostic.XmlTLInfo;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlTimestamp;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlTimestampedTimestamp;
 import eu.europa.esig.dss.jaxb.diagnostic.XmlTrustedServiceProvider;
@@ -83,6 +85,7 @@ import eu.europa.esig.dss.tsl.Condition;
 import eu.europa.esig.dss.tsl.KeyUsageBit;
 import eu.europa.esig.dss.tsl.ServiceInfo;
 import eu.europa.esig.dss.tsl.ServiceInfoStatus;
+import eu.europa.esig.dss.tsl.TLInfo;
 import eu.europa.esig.dss.utils.Utils;
 import eu.europa.esig.dss.util.TimeDependentValues;
 import eu.europa.esig.dss.validation.executor.CustomProcessExecutor;
@@ -994,6 +997,7 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 				xmlTSP.setTSPName(serviceInfo.getTspName());
 				xmlTSP.setTSPServiceName(serviceInfo.getServiceName());
 				xmlTSP.setTSPServiceType(serviceInfo.getType());
+				xmlTSP.setTLInfo(createXmlTLInfo(serviceInfo.getTLInfo()));
 				xmlTSP.setWellSigned(serviceInfo.isTlWellSigned());
 
 				final TimeDependentValues<ServiceInfoStatus> status = serviceInfo.getStatus();
@@ -1027,6 +1031,22 @@ public abstract class SignedDocumentValidator implements DocumentValidator {
 				}
 				xmlCert.getTrustedServiceProvider().add(xmlTSP);
 			}
+		}
+	}
+
+	private XmlTLInfo createXmlTLInfo(final TLInfo tlInfo) {
+		if ( tlInfo != null ) {
+			final XmlTLInfo xmlTLInfo = new XmlTLInfo();
+			xmlTLInfo.setWellSigned(tlInfo.isWellSigned());
+			xmlTLInfo.setTerritory(tlInfo.getTerritory());
+			xmlTLInfo.setTerritoryAsISO3166(tlInfo.getTerritoryAsISO3166());
+			xmlTLInfo.setSequenceNumber(BigInteger.valueOf(tlInfo.getSequenceNumber()));
+			xmlTLInfo.setIssueDate(tlInfo.getIssueDate());
+			xmlTLInfo.setNextUpdateDate(tlInfo.getNextUpdateDate());
+			xmlTLInfo.setLoadedDate(tlInfo.getLoadedDate());
+			return xmlTLInfo;
+		} else {
+			return null;
 		}
 	}
 
